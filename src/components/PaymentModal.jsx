@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import toast from 'react-hot-toast';
 import api from '../lib/api';
 
@@ -9,6 +9,7 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
   const [step, setStep] = useState('choose'); // choose | phone | waiting | confirmed | failed
   const [phone, setPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const pollAttemptRef = useRef(0);
 
   const checkoutPath =
     type === 'order' ? `/orders/${id}/checkout`
@@ -42,19 +43,26 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
     try {
       await api.post(mpesaPath, { phone });
       setStep('waiting');
-      poll();
+      pollAttemptRef.current += 1;
+      poll(pollAttemptRef.current);
     } catch (err) {
       toast.error(err.response?.data?.error || err.response?.data?.message || 'Could not start M-Pesa payment. Please try again.');
       setSubmitting(false);
     }
   };
 
-  const poll = () => {
+  const poll = (attemptId) => {
     let attempts = 0;
 
     const check = async () => {
+      if (attemptId !== pollAttemptRef.current) {
+        return; // a newer attempt superseded this one — stop silently
+      }
+
       try {
         const res = await api.get(statusPath);
+
+        if (attemptId !== pollAttemptRef.current) return;
 
         const isPaid =
           type === 'order' ? res.data.status === 'paid'
@@ -69,9 +77,12 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
 
         attempts += 1;
 
-        // course status has no payments array to inspect for an early failure signal,
-        // so it relies on the MAX_POLLS timeout below instead
-        if (type !== 'course') {
+        if (type === 'course') {
+          if (res.data.latest_payment_status === 'failed' && attempts > 3) {
+            setStep('failed');
+            return;
+          }
+        } else {
           const latestPayment = [...(res.data.payments || [])].sort(
             (a, b) => new Date(b.created_at) - new Date(a.created_at)
           )[0];
@@ -90,7 +101,9 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
 
         setTimeout(check, POLL_INTERVAL_MS);
       } catch {
-        setTimeout(check, POLL_INTERVAL_MS);
+        if (attemptId === pollAttemptRef.current) {
+          setTimeout(check, POLL_INTERVAL_MS);
+        }
       }
     };
 
