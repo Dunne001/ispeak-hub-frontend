@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 import App from './App';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -13,6 +14,7 @@ import Bookings from './pages/Bookings';
 import Courses from './pages/Courses';
 import CourseDetail from './pages/CourseDetail';
 import CoursePlayer from './pages/CoursePlayer';
+import AdminDashboard from './pages/AdminDashboard';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import CheckoutCancel from './pages/CheckoutCancel';
 import './index.css';
@@ -55,6 +57,16 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <CoursePlayer />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'admin',
+        element: (
+          <ProtectedRoute>
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
           </ProtectedRoute>
         ),
       },
