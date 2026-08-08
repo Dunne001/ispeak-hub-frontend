@@ -10,9 +10,20 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
   const [phone, setPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const checkoutPath = type === 'order' ? `/orders/${id}/checkout` : `/bookings/${id}/checkout`;
-  const mpesaPath = type === 'order' ? `/orders/${id}/mpesa` : `/bookings/${id}/mpesa`;
-  const statusPath = type === 'order' ? `/orders/${id}` : `/bookings/${id}`;
+  const checkoutPath =
+    type === 'order' ? `/orders/${id}/checkout`
+    : type === 'course' ? `/courses/${id}/checkout`
+    : `/bookings/${id}/checkout`;
+
+  const mpesaPath =
+    type === 'order' ? `/orders/${id}/mpesa`
+    : type === 'course' ? `/courses/${id}/mpesa`
+    : `/bookings/${id}/mpesa`;
+
+  const statusPath =
+    type === 'order' ? `/orders/${id}`
+    : type === 'course' ? `/courses/${id}`
+    : `/bookings/${id}`;
 
   const handleCard = async () => {
     setSubmitting(true);
@@ -20,7 +31,7 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
       const res = await api.post(checkoutPath);
       window.location.href = res.data.url;
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Could not start checkout. Please try again.');
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Could not start checkout. Please try again.');
       setSubmitting(false);
     }
   };
@@ -33,7 +44,7 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
       setStep('waiting');
       poll();
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Could not start M-Pesa payment. Please try again.');
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Could not start M-Pesa payment. Please try again.');
       setSubmitting(false);
     }
   };
@@ -44,10 +55,11 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
     const check = async () => {
       try {
         const res = await api.get(statusPath);
+
         const isPaid =
-          type === 'order'
-            ? res.data.status === 'paid'
-            : res.data.payments?.some((p) => p.status === 'confirmed');
+          type === 'order' ? res.data.status === 'paid'
+          : type === 'course' ? res.data.is_enrolled === true
+          : res.data.payments?.some((p) => p.status === 'confirmed');
 
         if (isPaid) {
           setStep('confirmed');
@@ -55,19 +67,23 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
           return;
         }
 
-        const latestPayment = [...(res.data.payments || [])].sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        )[0];
-        const failed = latestPayment?.status === 'failed';
-
         attempts += 1;
 
-        if (attempts >= MAX_POLLS) {
-          setStep('failed');
-          return;
+        // course status has no payments array to inspect for an early failure signal,
+        // so it relies on the MAX_POLLS timeout below instead
+        if (type !== 'course') {
+          const latestPayment = [...(res.data.payments || [])].sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          )[0];
+          const failed = latestPayment?.status === 'failed';
+
+          if (failed && attempts > 3) {
+            setStep('failed');
+            return;
+          }
         }
 
-        if (failed && attempts > 3) {
+        if (attempts >= MAX_POLLS) {
           setStep('failed');
           return;
         }

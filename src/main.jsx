@@ -10,6 +10,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Products from './pages/Products';
 import Bookings from './pages/Bookings';
+import Courses from './pages/Courses';
+import CourseDetail from './pages/CourseDetail';
+import CoursePlayer from './pages/CoursePlayer';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import CheckoutCancel from './pages/CheckoutCancel';
 import './index.css';
@@ -35,6 +38,23 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <Bookings />
+          </ProtectedRoute>
+        ),
+      },
+      { path: 'courses', element: <Courses /> },
+      {
+        path: 'courses/:id',
+        element: (
+          <ProtectedRoute>
+            <CourseDetail />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'lessons/:id',
+        element: (
+          <ProtectedRoute>
+            <CoursePlayer />
           </ProtectedRoute>
         ),
       },

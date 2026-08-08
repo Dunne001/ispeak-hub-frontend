@@ -26,6 +26,7 @@ export default function Navbar() {
       <div className="flex items-center gap-6 text-sm font-medium">
         <Link to="/products" className="hover:text-gold-light transition-colors">Bookstore</Link>
         <Link to="/bookings" className="hover:text-gold-light transition-colors">Bookings</Link>
+        <Link to="/courses" className="hover:text-gold-light transition-colors">Courses</Link>
 
         {loading ? null : user ? (
           <>

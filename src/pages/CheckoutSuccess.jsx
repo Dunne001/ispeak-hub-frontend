@@ -51,16 +51,27 @@ export default function CheckoutSuccess() {
 
     const poll = async () => {
       try {
-        const endpoint = type === 'order' ? `/orders/${id}` : `/bookings/${id}`;
-        const res = await api.get(endpoint);
+        let isPaid = false;
+        let data = null;
+
+        if (type === 'order') {
+          const res = await api.get(`/orders/${id}`);
+          data = res.data;
+          isPaid = data.status === 'paid';
+        } else if (type === 'booking') {
+          const res = await api.get(`/bookings/${id}`);
+          data = res.data;
+          isPaid = data.payments?.some((p) => p.status === 'confirmed');
+        } else if (type === 'course') {
+          const res = await api.get('/enrollments');
+          const enrollment = res.data.find((e) => e.course_id === Number(id));
+          data = enrollment?.course || null;
+          isPaid = !!enrollment;
+        }
+
         if (cancelled) return;
 
-        setRecord(res.data);
-
-        const isPaid =
-          type === 'order'
-            ? res.data.status === 'paid'
-            : res.data.payments?.some((p) => p.status === 'confirmed');
+        setRecord(data);
 
         if (isPaid) {
           setStatus('confirmed');
@@ -114,7 +125,9 @@ export default function CheckoutSuccess() {
             </div>
             <h1 className="mb-2 text-2xl font-semibold text-navy">Payment confirmed</h1>
             <p className="mb-6 text-sm text-navy/60">
-              {type === 'order' ? 'Your order is complete.' : 'Your booking is confirmed.'}
+              {type === 'order' && 'Your order is complete.'}
+              {type === 'booking' && 'Your booking is confirmed.'}
+              {type === 'course' && "You're enrolled! You can start the course now."}
             </p>
 
             {type === 'order' && record?.items?.length > 0 && (
@@ -123,6 +136,15 @@ export default function CheckoutSuccess() {
                   <DownloadButton key={item.id} productId={item.product_id} title={item.product?.title} />
                 ))}
               </div>
+            )}
+
+            {type === 'course' && (
+              <Link
+                to={`/courses/${id}`}
+                className="mb-3 block rounded-lg bg-gold px-4 py-2.5 font-medium text-navy transition hover:bg-gold-light"
+              >
+                Go to course
+              </Link>
             )}
 
             <Link
