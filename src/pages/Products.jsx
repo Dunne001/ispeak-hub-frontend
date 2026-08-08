@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import PaymentModal from '../components/PaymentModal';
 
 export default function Products() {
   const { user, loading: authLoading } = useAuth();
@@ -10,7 +11,8 @@ export default function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [buyingId, setBuyingId] = useState(null);
+  const [creatingId, setCreatingId] = useState(null);
+  const [activeOrderId, setActiveOrderId] = useState(null);
 
   useEffect(() => {
     api.get('/products')
@@ -33,18 +35,16 @@ export default function Products() {
       return;
     }
 
-    setBuyingId(product.id);
+    setCreatingId(product.id);
     try {
       const orderRes = await api.post('/orders', {
         items: [{ product_id: product.id, quantity: 1 }],
       });
-      const order = orderRes.data;
-
-      const checkoutRes = await api.post(`/orders/${order.id}/checkout`);
-      window.location.href = checkoutRes.data.url;
+      setActiveOrderId(orderRes.data.id);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Could not start checkout. Please try again.');
-      setBuyingId(null);
+      toast.error(err.response?.data?.message || 'Could not create order. Please try again.');
+    } finally {
+      setCreatingId(null);
     }
   };
 
@@ -109,16 +109,27 @@ export default function Products() {
                 </span>
                 <button
                   onClick={() => handleBuy(product)}
-                  disabled={buyingId === product.id || authLoading}
+                  disabled={creatingId === product.id || authLoading}
                   className="rounded-lg bg-navy px-3 py-1.5 text-sm font-medium text-cream transition hover:bg-navy-light disabled:opacity-50"
                 >
-                  {buyingId === product.id ? 'Starting…' : 'Buy'}
+                  {creatingId === product.id ? 'Starting…' : 'Buy'}
                 </button>
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {activeOrderId && (
+        <PaymentModal
+          type="order"
+          id={activeOrderId}
+          onClose={() => setActiveOrderId(null)}
+          onConfirmed={() => {
+            toast.success('Payment confirmed');
+          }}
+        />
+      )}
     </div>
   );
 }

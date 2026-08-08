@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import api from '../lib/api';
+import PaymentModal from '../components/PaymentModal';
 
 function statusBadge(status) {
   const styles = {
@@ -31,7 +32,7 @@ export default function Bookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [payingId, setPayingId] = useState(null);
+  const [activeBookingId, setActiveBookingId] = useState(null);
 
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
@@ -76,17 +77,6 @@ export default function Bookings() {
       toast.error(message);
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handlePay = async (booking) => {
-    setPayingId(booking.id);
-    try {
-      const res = await api.post(`/bookings/${booking.id}/checkout`);
-      window.location.href = res.data.url;
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Could not start checkout. Please try again.');
-      setPayingId(null);
     }
   };
 
@@ -203,17 +193,28 @@ export default function Bookings() {
 
               {!isPaid && (
                 <button
-                  onClick={() => handlePay(booking)}
-                  disabled={payingId === booking.id}
-                  className="rounded-lg bg-gold px-4 py-1.5 text-sm font-medium text-navy transition hover:bg-gold-light disabled:opacity-50"
+                  onClick={() => setActiveBookingId(booking.id)}
+                  className="rounded-lg bg-gold px-4 py-1.5 text-sm font-medium text-navy transition hover:bg-gold-light"
                 >
-                  {payingId === booking.id ? 'Starting…' : 'Pay with card'}
+                  Pay now
                 </button>
               )}
             </div>
           );
         })}
       </div>
+
+      {activeBookingId && (
+        <PaymentModal
+          type="booking"
+          id={activeBookingId}
+          onClose={() => setActiveBookingId(null)}
+          onConfirmed={() => {
+            toast.success('Payment confirmed');
+            loadBookings();
+          }}
+        />
+      )}
     </div>
   );
 }
