@@ -67,6 +67,10 @@ export default function CheckoutSuccess() {
           const enrollment = res.data.find((e) => e.course_id === Number(id));
           data = enrollment?.course || null;
           isPaid = !!enrollment;
+        } else if (type === 'programme') {
+          const res = await api.get(`/package-enrollments/${id}`);
+          data = res.data;
+          isPaid = data.status === 'active';
         }
 
         if (cancelled) return;
@@ -128,6 +132,7 @@ export default function CheckoutSuccess() {
               {type === 'order' && 'Your order is complete.'}
               {type === 'booking' && 'Your booking is confirmed.'}
               {type === 'course' && "You're enrolled! You can start the course now."}
+              {type === 'programme' && 'Your package is active — you can start booking sessions.'}
             </p>
 
             {type === 'order' && record?.items?.length > 0 && (
@@ -144,6 +149,15 @@ export default function CheckoutSuccess() {
                 className="mb-3 block rounded-lg bg-gold px-4 py-2.5 font-medium text-navy transition hover:bg-gold-light"
               >
                 Go to course
+              </Link>
+            )}
+
+            {type === 'programme' && record?.programme_id && (
+              <Link
+                to={`/programmes/${record.programme_id}`}
+                className="mb-3 block rounded-lg bg-gold px-4 py-2.5 font-medium text-navy transition hover:bg-gold-light"
+              >
+                Go to programme
               </Link>
             )}
 

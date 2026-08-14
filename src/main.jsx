@@ -14,6 +14,10 @@ import Bookings from './pages/Bookings';
 import Courses from './pages/Courses';
 import CourseDetail from './pages/CourseDetail';
 import CoursePlayer from './pages/CoursePlayer';
+import Programmes from './pages/Programmes';
+import ProgrammeDetail from './pages/ProgrammeDetail';
+import CoachingServices from './pages/CoachingServices';
+import CoachingServiceDetail from './pages/CoachingServiceDetail';
 import AdminDashboard from './pages/AdminDashboard';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import CheckoutCancel from './pages/CheckoutCancel';
@@ -49,6 +53,24 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <CourseDetail />
+          </ProtectedRoute>
+        ),
+      },
+      { path: 'programmes', element: <Programmes /> },
+      {
+        path: 'programmes/:id',
+        element: (
+          <ProtectedRoute>
+            <ProgrammeDetail />
+          </ProtectedRoute>
+        ),
+      },
+      { path: 'coaching-services', element: <CoachingServices /> },
+      {
+        path: 'coaching-services/:id',
+        element: (
+          <ProtectedRoute>
+            <CoachingServiceDetail />
           </ProtectedRoute>
         ),
       },

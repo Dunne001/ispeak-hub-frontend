@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../lib/api';
 import PaymentModal from '../components/PaymentModal';
@@ -31,14 +32,7 @@ function paymentBadge(booking) {
 export default function Bookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
-
-  const [startsAt, setStartsAt] = useState('');
-  const [endsAt, setEndsAt] = useState('');
-  const [partySize, setPartySize] = useState(1);
-  const [notes, setNotes] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   const loadBookings = () => {
     setLoading(true);
@@ -52,105 +46,28 @@ export default function Bookings() {
     loadBookings();
   }, []);
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await api.post('/bookings', {
-        starts_at: startsAt,
-        ends_at: endsAt,
-        party_size: partySize,
-        notes: notes || undefined,
-      });
-      toast.success('Booking created');
-      setShowForm(false);
-      setStartsAt('');
-      setEndsAt('');
-      setPartySize(1);
-      setNotes('');
-      loadBookings();
-    } catch (err) {
-      const message =
-        Object.values(err.response?.data?.errors || {})[0]?.[0] ||
-        err.response?.data?.message ||
-        'Could not create booking. Check your details and try again.';
-      toast.error(message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-navy">Your bookings</h1>
-          <p className="text-sm text-navy/60">Coaching sessions and speaking engagements</p>
+          <p className="text-sm text-navy/60">Coaching sessions, assessments, and package sessions</p>
         </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded-lg bg-navy px-4 py-2 text-sm font-medium text-cream transition hover:bg-navy-light"
-        >
-          {showForm ? 'Cancel' : 'New booking'}
-        </button>
-      </div>
-
-      {showForm && (
-        <form onSubmit={handleCreate} className="mb-8 space-y-4 rounded-xl border border-navy/10 bg-white p-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-navy">Starts at</label>
-              <input
-                type="datetime-local"
-                required
-                value={startsAt}
-                onChange={(e) => setStartsAt(e.target.value)}
-                className="w-full rounded-lg border border-navy/20 bg-white px-3 py-2 text-navy focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-navy">Ends at</label>
-              <input
-                type="datetime-local"
-                required
-                value={endsAt}
-                onChange={(e) => setEndsAt(e.target.value)}
-                className="w-full rounded-lg border border-navy/20 bg-white px-3 py-2 text-navy focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-navy">Party size</label>
-            <input
-              type="number"
-              min={1}
-              max={20}
-              value={partySize}
-              onChange={(e) => setPartySize(Number(e.target.value))}
-              className="w-full rounded-lg border border-navy/20 bg-white px-3 py-2 text-navy focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold sm:w-32"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-navy">Notes (optional)</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className="w-full rounded-lg border border-navy/20 bg-white px-3 py-2 text-navy focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-lg bg-navy px-4 py-2.5 font-medium text-cream transition hover:bg-navy-light disabled:opacity-50"
+        <div className="flex gap-2">
+          <Link
+            to="/programmes"
+            className="rounded-lg border border-navy/20 px-4 py-2 text-sm font-medium text-navy transition hover:bg-navy/5"
           >
-            {submitting ? 'Creating…' : 'Create booking'}
-          </button>
-        </form>
-      )}
+            Browse programmes
+          </Link>
+          <Link
+            to="/coaching-services"
+            className="rounded-lg bg-navy px-4 py-2 text-sm font-medium text-cream transition hover:bg-navy-light"
+          >
+            Book a session
+          </Link>
+        </div>
+      </div>
 
       {loading && (
         <div className="flex justify-center py-16">
@@ -168,7 +85,7 @@ export default function Bookings() {
 
       {!loading && bookings.length === 0 && (
         <div className="rounded-xl border border-navy/10 bg-white p-8 text-center text-navy/60">
-          No bookings yet. Create one to get started.
+          No bookings yet. Browse a programme or coaching service to get started.
         </div>
       )}
 
@@ -181,10 +98,15 @@ export default function Bookings() {
                 <div className="flex items-center gap-2">
                   {statusBadge(booking.status)}
                   {paymentBadge(booking)}
+                  {booking.session_type && (
+                    <span className="rounded-full bg-navy/10 px-2 py-0.5 text-xs font-medium text-navy/60">
+                      {booking.session_type}
+                    </span>
+                  )}
                 </div>
-                <span className="text-xs text-navy/40">
-                  {booking.party_size} {booking.party_size === 1 ? 'person' : 'people'}
-                </span>
+                {booking.delivery_mode && (
+                  <span className="text-xs text-navy/40 capitalize">{booking.delivery_mode}</span>
+                )}
               </div>
               <p className="mb-1 font-medium text-navy">
                 {new Date(booking.starts_at).toLocaleString()} — {new Date(booking.ends_at).toLocaleString()}

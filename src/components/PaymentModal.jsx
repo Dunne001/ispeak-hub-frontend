@@ -10,20 +10,24 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
   const [phone, setPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const pollAttemptRef = useRef(0);
+  const enrollmentIdRef = useRef(null);
 
   const checkoutPath =
     type === 'order' ? `/orders/${id}/checkout`
     : type === 'course' ? `/courses/${id}/checkout`
+    : type === 'programme' ? `/programmes/${id}/checkout`
     : `/bookings/${id}/checkout`;
 
   const mpesaPath =
     type === 'order' ? `/orders/${id}/mpesa`
     : type === 'course' ? `/courses/${id}/mpesa`
+    : type === 'programme' ? `/programmes/${id}/mpesa`
     : `/bookings/${id}/mpesa`;
 
-  const statusPath =
+  const statusPath = () =>
     type === 'order' ? `/orders/${id}`
     : type === 'course' ? `/courses/${id}`
+    : type === 'programme' ? `/package-enrollments/${enrollmentIdRef.current}`
     : `/bookings/${id}`;
 
   const handleCard = async () => {
@@ -41,7 +45,10 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.post(mpesaPath, { phone });
+      const res = await api.post(mpesaPath, { phone });
+      if (type === 'programme') {
+        enrollmentIdRef.current = res.data.enrollment_id;
+      }
       setStep('waiting');
       pollAttemptRef.current += 1;
       poll(pollAttemptRef.current);
@@ -56,17 +63,18 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
 
     const check = async () => {
       if (attemptId !== pollAttemptRef.current) {
-        return; // a newer attempt superseded this one — stop silently
+        return; // a newer attempt superseded this one, stop silently
       }
 
       try {
-        const res = await api.get(statusPath);
+        const res = await api.get(statusPath());
 
         if (attemptId !== pollAttemptRef.current) return;
 
         const isPaid =
           type === 'order' ? res.data.status === 'paid'
           : type === 'course' ? res.data.is_enrolled === true
+          : type === 'programme' ? res.data.status === 'active'
           : res.data.payments?.some((p) => p.status === 'confirmed');
 
         if (isPaid) {
@@ -82,7 +90,7 @@ export default function PaymentModal({ type, id, onClose, onConfirmed }) {
             setStep('failed');
             return;
           }
-        } else {
+        } else if (type !== 'programme') {
           const latestPayment = [...(res.data.payments || [])].sort(
             (a, b) => new Date(b.created_at) - new Date(a.created_at)
           )[0];
