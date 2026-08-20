@@ -18,6 +18,10 @@ import Programmes from './pages/Programmes';
 import ProgrammeDetail from './pages/ProgrammeDetail';
 import CoachingServices from './pages/CoachingServices';
 import CoachingServiceDetail from './pages/CoachingServiceDetail';
+import ClientPortal from './pages/ClientPortal';
+import Requests from './pages/Requests';
+import FeeStatement from './pages/FeeStatement';
+import Timetable from './pages/Timetable';
 import AdminDashboard from './pages/AdminDashboard';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import CheckoutCancel from './pages/CheckoutCancel';
@@ -35,6 +39,19 @@ const router = createBrowserRouter([
             <Home />
           </ProtectedRoute>
         ),
+      },
+      {
+        path: 'dashboard',
+        element: (
+          <ProtectedRoute>
+            <ClientPortal />
+          </ProtectedRoute>
+        ),
+        children: [
+          { path: 'requests', element: <Requests /> },
+          { path: 'fee-statement', element: <FeeStatement /> },
+          { path: 'timetable', element: <Timetable /> },
+        ],
       },
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
