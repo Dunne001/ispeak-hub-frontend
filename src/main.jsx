@@ -22,6 +22,7 @@ import ClientPortal from './pages/ClientPortal';
 import Requests from './pages/Requests';
 import FeeStatement from './pages/FeeStatement';
 import Timetable from './pages/Timetable';
+import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import CheckoutCancel from './pages/CheckoutCancel';
@@ -51,6 +52,7 @@ const router = createBrowserRouter([
           { path: 'requests', element: <Requests /> },
           { path: 'fee-statement', element: <FeeStatement /> },
           { path: 'timetable', element: <Timetable /> },
+          { path: 'profile', element: <Profile /> },
         ],
       },
       { path: 'login', element: <Login /> },

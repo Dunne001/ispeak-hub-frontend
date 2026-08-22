@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Receipt,
   CalendarDays,
+  UserCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/api';
@@ -39,6 +40,7 @@ const NAV_GROUPS = [
   {
     label: 'Account',
     items: [
+      { to: '/dashboard/profile', label: 'Profile', icon: UserCircle },
       { to: '/dashboard/requests', label: 'Requests', icon: ClipboardList },
       { to: '/dashboard/fee-statement', label: 'Fee statement', icon: Receipt },
     ],
@@ -86,16 +88,20 @@ export default function ClientPortal() {
       <div className="mx-auto flex max-w-6xl gap-6 px-4 py-8">
         <aside className="flex w-64 shrink-0 flex-col print:hidden">
           <div className="mb-6 flex items-center gap-3 rounded-xl border border-navy/10 bg-white p-4 shadow-sm">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold to-gold-light font-display text-lg font-semibold text-navy">
-              {initial}
-            </div>
+            {user?.avatar_url ? (
+              <img src={user.avatar_url} alt={user.name} className="h-11 w-11 shrink-0 rounded-full object-cover" />
+            ) : (
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold to-gold-light font-display text-lg font-semibold text-navy">
+                {initial}
+              </div>
+            )}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-navy">{user?.name}</p>
               <p className="truncate text-xs text-navy/50">{user?.email}</p>
             </div>
           </div>
 
-          <nav className="flex-1 space-y-5 rounded-xl border border-navy/10 bg-white p-3 shadow-sm print:hidden">
+          <nav className="flex-1 space-y-5 rounded-xl border border-navy/10 bg-white p-3 shadow-sm">
             {NAV_GROUPS.map((group) => (
               <div key={group.label}>
                 <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-navy/35">
